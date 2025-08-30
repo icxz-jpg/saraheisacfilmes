@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Isac e Sarah Filmes</title>
+  <meta name="description" content="Biblioteca pessoal de vídeos com player embutido, upload e suporte a links (YouTube / Google Drive)." />
+  <style>
+    :root{--bg:#071017;--panel:#0f1720;--soft:#111822;--accent:#ff5ca8;--accent-2:#7c4dff;--text:#e8eef8;--muted:#9fb0c9;--radius:12px;--shadow:0 12px 30px rgba(2,6,23,.6);--maxw:1200px}
+    *{box-sizing:border-box}html,body{height:100%}body{margin:0;font:500 15px/1.45 Inter,system-ui,Arial;background:linear-gradient(180deg,#041021 0%,#071017 100%);color:var(--text);-webkit-font-smoothing:antialiased}
+    a{color:var(--accent)}img,video,iframe{display:block;max-width:100%}
+    .wrap{max-width:var(--maxw);margin:24px auto;padding:18px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand{display:flex;align-items:center;gap:14px}
+    .logo{width:54px;height:54px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--shadow)}
+    h1{margin:0;font-size:20px}
+    .toolbar{display:flex;gap:10px;align-items:center}
+    .btn{background:var(--panel);border:0;padding:10px 12px;border-radius:8px;color:var(--text);cursor:pointer;transition:all 0.2s ease;font-weight:500}
+    .btn:hover{background:var(--soft);transform:translateY(-1px)}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));}
+    .controls{display:flex;gap:12px;margin:16px 0;align-items:center}
+    input[type=text],select,textarea{padding:10px;border-radius:10px;border:1px solid #243141;background:#0b1520;color:var(--text)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+    .card{background:linear-gradient(180deg,#08121a,#071018);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:all 0.3s ease}
+    .card:hover{transform:scale(1.05);box-shadow:0 20px 40px rgba(2,6,23,.8)}
+    .poster{height:340px;object-fit:cover;background:#08121a}
+    .card-body{padding:12px;display:flex;flex-direction:column;gap:8px}
+    .title{font-weight:700}
+    .meta{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:13px}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+    dialog{border:0;border-radius:12px;padding:0;background:#07111a;color:var(--text);box-shadow:0 20px 60px rgba(0,0,0,.4);}
+    .modal{padding:16px;width:min(80vw,1000px);height:min(75vh,600px);transition:all 0.3s ease}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{display:block;font-size:13px;margin-bottom:6px}
+    .hint{font-size:13px;color:var(--muted)}
+    .player-bar{display:flex;gap:8px;align-items:center}
+    select.sm{padding:6px;border-radius:8px}
+    .stars {
+      display: inline-block;
+      color: gold;
+      font-size: 18px;
+      user-select: none;
+    }
+    .stars span {
+      display: inline-block;
+      width: 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: color 0.2s ease, transform 0.1s ease;
+    }
+    .stars span:hover {
+      transform: scale(1.2);
+    }
+    .stars span.hovered {
+      color: #ffc107;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    @media(max-width:760px){.grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}.poster{height:220px}.grid-2{grid-template-columns:1fr}}
+    .continue-watching { margin: 20px 0; }
+    .continue-watching h3 { margin: 0 0 10px; font-size: 18px; }
+    .continue-grid { display: flex; gap: 14px; overflow-x: auto; padding: 10px 0; }
+    .continue-grid .card { min-width: 180px; flex-shrink: 0; }
+    .continue-grid .poster { height: 250px; }
+    @media(max-width:760px){ .continue-grid { gap: 10px; } .continue-grid .card { min-width: 140px; } .continue-grid .poster { height: 200px; } }
+    .separator { border: 0; height: 1px; background: var(--muted); margin: 20px 0; }
+    .tabs { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
+    .tab-btn { background: var(--panel); border: 1px solid var(--accent); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .tab-btn.active { background: var(--accent); color: #000; }
+    .tab-btn:hover { background: var(--soft); }
+    .categories { display: flex; flex-wrap: wrap; gap: 8px; }
+    .categories label { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+    .imdb { margin-top: 8px; }
+    .imdb a { color: var(--accent); text-decoration: none; }
+    .player-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-size: cover; background-position: center; background-repeat: no-repeat; filter: blur(8px) brightness(0.08) contrast(0.8) saturate(0.5); z-index: -1; display: none; will-change: filter; }
+  </style>
+</head>
+<body>
+  <div id="library" class="wrap" style="display: block;">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden></div>
+        <div>
+          <h1>Isac e Sarah Filmes</h1>
+          <div class="hint">Sua biblioteca pessoal — player embutido, upload e links.</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn primary" id="addBtn">+ Adicionar Filme</button>
+        <button class="btn primary" id="addSeriesBtn">+ Adicionar Série</button>
+        <button class="btn" id="importBtn">Importar</button>
+        <input id="importFile" type="file" accept="application/json" hidden>
+        <button class="btn" id="exportBtn">Exportar</button>
+        <button class="btn" id="clearBtn">Limpar</button>
+      </div>
+    </header>
+
+    <div class="controls">
+      <input id="q" type="text" placeholder="Buscar por título, sinopse ou categoria" style="flex:1">
+      <select id="sort">
+        <option value="new">Mais recentes</option>
+        <option value="name">Nome A→Z</option>
+        <option value="cat">Categoria</option>
+      </select>
+      <select id="filter">
+        <option value="all">Todas categorias</option>
+      </select>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-genre="all">Todos</button>
+      <button class="tab-btn" data-type="series">Séries</button>
+      <button class="tab-btn" data-genre="Comedy">Comédia</button>
+      <button class="tab-btn" data-genre="Action">Ação</button>
+      <button class="tab-btn" data-genre="Romance">Romance</button>
+      <button class="tab-btn" data-genre="Animation">Animação</button>
+      <button class="tab-btn" data-genre="Barbie">Barbie</button>
+    </div>
+
+    <section id="continueWatching" class="continue-watching" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="margin:0">Continuar Assistindo</h3>
+        <button id="clearContinueBtn" class="btn">Limpar</button>
+      </div>
+      <div class="continue-grid"></div>
+    </section>
+
+    <hr class="separator">
+
+    <section id="grid" class="grid" aria-live="polite"></section>
+    <div id="empty" class="hint" style="text-align:center;padding:40px">Nenhuma mídia ainda. Clique em <b>Adicionar</b> para começar.</div>
+
+    <!-- Modal: add/edit -->
+    <dialog id="movieDialog">
+      <form method="dialog" class="modal" id="movieForm">
+        <h2 id="dialogTitle">Adicionar filme</h2>
+        <div class="grid-2">
+          <div>
+            <label>Título (obrigatório)</label>
+            <input id="fTitle" required type="text">
+          </div>
+          <div id="typeSection">
+            <label>Tipo</label>
+            <div>
+              <label><input type="radio" name="type" value="movie" checked> Filme</label>
+              <label><input type="radio" name="type" value="series"> Série</label>
+            </div>
+          </div>
+          <div>
+            <label>Categorias</label>
+            <div class="categories">
+              <label><input type="checkbox" name="category" value="Comedy"> Comédia</label>
+              <label><input type="checkbox" name="category" value="Action"> Ação</label>
+              <label><input type="checkbox" name="category" value="Romance"> Romance</label>
+              <label><input type="checkbox" name="category" value="Animation"> Animação</label>
+              <label><input type="checkbox" name="category" value="Barbie"> Barbie</label>
+              <label><input type="checkbox" name="category" value="Drama"> Drama</label>
+              <label><input type="checkbox" name="category" value="Horror"> Terror</label>
+              <label><input type="checkbox" name="category" value="Sci-Fi"> Ficção Científica</label>
+              <label><input type="checkbox" name="category" value="Documentary"> Documentário</label>
+            </div>
+          </div>
+          <div style="grid-column:1/3">
+            <label>Sinopse</label>
+            <textarea id="fSynopsis" rows="3" maxlength="800"></textarea>
+          </div>
+          <div>
+            <label>Link IMDb (opcional)</label>
+            <input id="fImdbLink" type="text" placeholder="https://www.imdb.com/title/...">
+          </div>
+          <div id="videoSection">
+            <div>
+              <label>Fonte de vídeo (colar link público do YouTube/Drive ou deixar vazio e enviar arquivo)</label>
+              <input id="fVideoLink" type="text" placeholder="https://youtu.be/... ou https://drive.google.com/..."></input>
+            </div>
+            <div>
+              <label>Upload de vídeo (MP4/WebM) — opcional</label>
+              <input id="fVideoFile" type="file" accept="video/*">
+              <div class="hint">Arquivos grandes são armazenados em IndexedDB (recomendado).</div>
+            </div>
+            <div>
+              <label>Legendas (SRT) — opcional</label>
+              <input id="fSubtitle" type="file" accept=".srt">
+            </div>
+          </div>
+          <div>
+            <label>Capa (JPG/PNG)</label>
+            <input id="fCoverFile" type="file" accept="image/*">
+          </div>
+          <div>
+            <label>Imagem de fundo (opcional)</label>
+            <input id="fBgImage" type="file" accept="image/*">
+          </div>
+          <div id="episodesSection" style="display:none; grid-column:1/3">
+            <label>Episódios</label>
+            <div id="episodesContainer"></div>
+            <button type="button" id="addEpisodeBtn" class="btn">+ Adicionar Episódio</button>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+          <button value="cancel" class="btn">Cancelar</button>
+          <button id="saveBtn" class="btn primary">Salvar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Episode selector modal -->
+    <dialog id="episodeDialog">
+      <div class="player-bg" id="episodeBg"></div>
+      <div class="modal" style="background:rgba(7,17,26,0.8);backdrop-filter:blur(25px)">
+        <h2 id="episodeDialogTitle" style="color:var(--text);margin-bottom:20px">Escolher Episódio</h2>
+        <div id="episodeSelector"></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+          <button value="cancel" class="btn" style="background:var(--soft)">Cancelar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Player modal -->
+    <dialog id="playerDialog">
+      <div class="player-bg" id="playerBg"></div>
+      <div class="modal" style="padding-bottom:10px;background:rgba(7,17,26,0.8);backdrop-filter:blur(25px)">
+        <header style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <h3 id="playerTitle" style="margin:0">Título</h3>
+            <div id="playerMeta" class="hint"></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="player-bar">
+              <label class="hint">Velocidade</label>
+              <select id="speedSel" class="sm">
+                <option>0.5</option><option>0.75</option><option selected>1</option><option>1.25</option><option>1.5</option><option>2</option>
+              </select>
+            </div>
+            <div class="player-bar">
+              <label class="hint">Volume</label>
+              <input id="volumeSel" type="range" min="0" max="1" step="0.1" value="1" class="sm">
+            </div>
+            <div class="player-bar">
+              <label class="hint">Qualidade</label>
+              <select id="qualitySel" class="sm"></select>
+            </div>
+            <div class="player-bar" id="seasonBar">
+              <label class="hint">Temporada</label>
+              <select id="seasonSel" class="sm"></select>
+            </div>
+            <div class="player-bar" id="episodeBar">
+              <label class="hint">Episódio</label>
+              <select id="episodeSel" class="sm"></select>
+            </div>
+            <button id="prevEpBtn" class="btn">◀ Ep Anterior</button>
+            <button id="nextEpBtn" class="btn">Próximo Ep ▶</button>
+            <button id="fsBtn" class="btn">Tela cheia</button>
+            <button id="closePlayer" class="btn">Fechar</button>
+          </div>
+        </header>
+        <div id="playerArea" style="margin-top:12px; height: calc(100% - 120px); display: flex; align-items: center; justify-content: center;"></div>
+        <div id="subControls" style="margin-top:8px;color:var(--muted)"></div>
+      </div>
+    </dialog>
+
+    <template id="cardTpl">
+      <article class="card">
+        <img class="poster" alt="Capa">
+        <div class="card-body">
+          <div class="title"></div>
+          <div class="meta"><span class="cat"></span><span class="type"></span></div>
+          <div class="desc"></div>
+          <div class="actions">
+            <button class="btn watch">▶ Assistir</button>
+            <button class="btn edit">✏️ Editar</button>
+            <button class="btn" id="downloadBtn">⬇ Download</button>
+            <button class="btn" id="delBtn">🗑️ Excluir</button>
+          </div>
+          <!-- NOVO: avaliação -->
+          <div class="rating">
+            Avaliação: <span class="stars"></span>
+          </div>
+          <div class="imdb"></div>
+        </div>
+      </article>
+    </template>
+
+  </div>
+
+  <script>
+  (function(){
+    const DB_NAME = 'isac_sarah_db';
+    const STORE = 'videos';
+    function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open(DB_NAME,1); r.onupgradeneeded=()=> r.result.createObjectStore(STORE); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }) }
+    async function idbPut(key, blob){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).put(blob,key); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }) }
+    async function idbGet(key){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readonly'); const req=tx.objectStore(STORE).get(key); req.onsuccess=()=>res(req.result); req.onerror=()=>rej(req.error); }) }
+    async function idbDel(key){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).delete(key); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }) }
+
+    const KEY = 'isacSarah.library.v1';
+    let library = load();
+    localStorage.setItem('currentUser', 'isac');
+
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    const addBtn = document.getElementById('addBtn');
+    const addSeriesBtn = document.getElementById('addSeriesBtn');
+    const movieDialog = document.getElementById('movieDialog');
+    const episodeDialog = document.getElementById('episodeDialog');
+    const playerDialog = document.getElementById('playerDialog');
+    const importFile = document.getElementById('importFile');
+
+    const fTitle = document.getElementById('fTitle');
+    const fSynopsis = document.getElementById('fSynopsis');
+    const fImdbLink = document.getElementById('fImdbLink');
+    const fVideoLink = document.getElementById('fVideoLink');
+    const fVideoFile = document.getElementById('fVideoFile');
+    const fCoverFile = document.getElementById('fCoverFile');
+    const fBgImage = document.getElementById('fBgImage');
+    const fSubtitle = document.getElementById('fSubtitle');
+    const saveBtn = document.getElementById('saveBtn');
+    const q = document.getElementById('q');
+    const sortSel = document.getElementById('sort');
+    const filterSel = document.getElementById('filter');
+
+    const playerArea = document.getElementById('playerArea');
+    const playerTitle = document.getElementById('playerTitle');
+    const playerMeta = document.getElementById('playerMeta');
+    const speedSel = document.getElementById('speedSel');
+    const volumeSel = document.getElementById('volumeSel');
+    const qualitySel = document.getElementById('qualitySel');
+    const seasonSel = document.getElementById('seasonSel');
+    const episodeSel = document.getElementById('episodeSel');
+    const prevEpBtn = document.getElementById('prevEpBtn');
+    const nextEpBtn = document.getElementById('nextEpBtn');
+    const fsBtn = document.getElementById('fsBtn');
+    const closePlayer = document.getElementById('closePlayer');
+    const subControls = document.getElementById('subControls');
+
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    let activeGenre = 'all';
+    let activeType = 'all';
+    tabBtns.forEach(btn => {
+      btn.onclick = () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeGenre = btn.dataset.genre || 'all';
+        activeType = btn.dataset.type || 'all';
+        render();
+      };
+    });
+
+    // Type change for form
+    document.querySelectorAll('input[name="type"]').forEach(radio => {
+      radio.onchange = () => {
+        const isSeries = document.querySelector('input[name="type"]:checked').value === 'series';
+        document.getElementById('episodesSection').style.display = isSeries ? 'block' : 'none';
+      };
+    });
+
+    // Add episode button
+    document.getElementById('addEpisodeBtn').onclick = () => {
+      const container = document.getElementById('episodesContainer');
+      const episodeDiv = document.createElement('div');
+      episodeDiv.className = 'episode-item';
+      episodeDiv.innerHTML = `
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px">
+          <input type="number" placeholder="Temporada" class="season" min="1" required style="width:80px">
+          <input type="number" placeholder="Episódio" class="episodeNum" min="1" required style="width:80px">
+          <input type="text" placeholder="Título do Episódio" class="epTitle" required style="flex:1">
+          <input type="text" placeholder="Link do vídeo" class="epVideoLink" style="flex:1">
+          <input type="file" accept="video/*" class="epVideoFile" style="width:120px">
+          <input type="file" accept=".srt" class="epSubtitle" style="width:120px">
+          <button type="button" class="removeEpisode btn" style="padding:4px 8px">Remover</button>
+        </div>
+      `;
+      episodeDiv.querySelector('.removeEpisode').onclick = () => episodeDiv.remove();
+      container.appendChild(episodeDiv);
+    };
+
+    function uid(){ return Math.random().toString(36).slice(2) + Date.now().toString(36) }
+    function now(){ return Date.now() }
+    function save(){ localStorage.setItem(KEY, JSON.stringify(library)) }
+    function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]') }catch{return []} }
+    function fmtDate(ts){ const d=new Date(ts); return d.toLocaleDateString(); }
+
+    function updateFilterOptions(){
+      const cats = Array.from(new Set(library.map(x=>x.category||'Sem categoria'))).sort();
+      filterSel.innerHTML = '<option value="all">Todas categorias</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('')
+    }
+
+    function youtubeEmbed(url){ try{ const u=new URL(url); if(u.hostname.includes('youtu.be')) return 'https://www.youtube.com/embed/'+u.pathname.slice(1); if(u.hostname.includes('youtube.com')){ const id=u.searchParams.get('v'); if(id) return 'https://www.youtube.com/embed/'+id; if(u.pathname.startsWith('/embed/')) return url; } }catch(e){} return null; }
+    function driveDownload(url){ try{ const u=new URL(url); if(u.hostname.includes('drive.google.com')){ const p=u.pathname; const m=p.match(/\/file\/d\/([^\/]+)/); if(m) return `https://drive.google.com/uc?export=download&id=${m[1]}`; const id=u.searchParams.get('id'); if(id) return `https://drive.google.com/uc?export=download&id=${id}`; }}catch(e){} return null; }
+
+    function renderStars(cardEl, movie){
+      const starsEl = cardEl.querySelector('.stars');
+      starsEl.innerHTML = '';
+      const rating = movie.rating || 0;
+      for(let i=1;i<=5;i++){
+        const star = document.createElement('span');
+        if(i <= Math.floor(rating)) star.textContent='★';
+        else if(i - 0.5 === rating) star.textContent='½';
+        else star.textContent='☆';
+        star.onmouseover = ()=> updateHover(starsEl, i);
+        star.onmouseout = ()=> updateHover(starsEl, rating);
+        star.onclick = (e)=>{
+          const rect = e.target.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          let newRating = x < rect.width/2 ? i-0.5 : i;
+          movie.rating = newRating;
+          save();
+          render();
+        };
+        starsEl.appendChild(star);
+      }
+    }
+    function updateHover(starsEl, val){
+      Array.from(starsEl.children).forEach((s,i)=>{
+        if(i+1 <= Math.floor(val)) s.classList.add('hovered');
+        else if(i+0.5 === val) s.classList.add('hovered');
+        else s.classList.remove('hovered');
+      });
+    }
+
+    function render(){
+      const currentUser = localStorage.getItem('currentUser');
+      // Continue Watching
+      const continueGrid = document.querySelector('.continue-grid');
+      continueGrid.innerHTML = '';
+      const continuing = library.filter(m => m.progress && m.progress[currentUser] && m.progress[currentUser].currentTime > 0 && m.progress[currentUser].currentTime < m.progress[currentUser].duration);
+      if(continuing.length > 0){
+        document.getElementById('continueWatching').style.display = 'block';
+        continuing.forEach(m => {
+          m.type = m.type || 'movie';
+          let displayTitle = m.title;
+          let displayCategory = m.category;
+          if(m.type === 'episode'){
+            const series = library.find(s => s.id === m.parentId);
+            if(series){
+              displayTitle = series.title + ' - ' + m.title;
+              displayCategory = series.category;
+            }
+          }
+          const progress = m.progress[currentUser];
+          const progressPercent = progress && progress.duration ? (progress.currentTime / progress.duration) * 100 : 0;
+          const coverSrc = m.type === 'episode' ? (library.find(s => s.id === m.parentId)?.cover || '') : (m.cover || '');
+          const card = document.createElement('article');
+          card.className = 'card';
+          card.innerHTML = `
+            <img class="poster" src="${coverSrc}" alt="Capa">
+            <div class="card-body">
+              <div class="title">${displayTitle}</div>
+              <div class="meta"><span class="cat">${displayCategory || 'Sem categoria'}</span><span class="type">${m.type === 'episode' ? `S${m.season}E${m.episode}` : (m.type === 'series' ? 'Série' : 'Filme')}</span></div>
+              <div class="actions">
+                <button class="btn watch">▶ Continuar</button>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${progressPercent}%"></div>
+              </div>
+            </div>
+          `;
+          card.querySelector('.watch').onclick = () => { if(m.type === 'series') openEpisodeSelector(m.id); else openPlayer(m.id); };
+          continueGrid.appendChild(card);
+        });
+      } else {
+        document.getElementById('continueWatching').style.display = 'none';
+      }
+
+      grid.innerHTML='';
+      const term = q.value.trim().toLowerCase();
+      library.forEach(m => {
+        m.type = m.type || 'movie';
+        m.searchTitle = m.title;
+        if(m.type === 'episode'){
+          const series = library.find(s => s.id === m.parentId);
+          if(series) m.searchTitle = series.title + ' - ' + m.title;
+        }
+      });
+      let list = library.filter(m=>{
+        if(m.type === 'episode') return false;
+        const matches = (m.searchTitle||'').toLowerCase().includes(term) || (m.synopsis||'').toLowerCase().includes(term) || (m.category||'').toLowerCase().includes(term);
+        const cat = filterSel.value==='all' || (m.category||'Sem categoria')===filterSel.value;
+        const genreMatch = activeGenre === 'all' || (m.category || '').toLowerCase().includes(activeGenre.toLowerCase()) || (activeGenre === 'Barbie' && (m.searchTitle || '').toLowerCase().includes('barbie'));
+        const typeMatch = activeType === 'all' || m.type === activeType;
+        return matches && cat && genreMatch && typeMatch;
+      });
+      if(sortSel.value==='new') list.sort((a,b)=>b.created-a.created);
+      if(sortSel.value==='name') list.sort((a,b)=>a.title.localeCompare(b.title));
+      if(sortSel.value==='cat') list.sort((a,b)=> (a.category||'').localeCompare(b.category||''));
+      if(list.length===0){ empty.hidden=false; return } else empty.hidden=true;
+      list.forEach(m=>{
+        m.type = m.type || 'movie';
+        let displayTitle = m.title;
+        let displaySynopsis = m.synopsis;
+        let displayCategory = m.category;
+        let displayRating = m.rating;
+        let displayImdb = m.imdbLink;
+        if(m.type === 'episode'){
+          const series = library.find(s => s.id === m.parentId);
+          if(series){
+            displayTitle = series.title + ' - ' + m.title;
+            displaySynopsis = series.synopsis;
+            displayCategory = series.category;
+            displayRating = series.rating;
+            displayImdb = series.imdbLink;
+          }
+        }
+        const tpl = document.getElementById('cardTpl').content.cloneNode(true);
+        tpl.querySelector('.poster').src = m.cover || '';
+        tpl.querySelector('.title').textContent = displayTitle;
+        tpl.querySelector('.desc').textContent = displaySynopsis || '';
+        tpl.querySelector('.cat').textContent = displayCategory || 'Sem categoria';
+        tpl.querySelector('.type').textContent = m.type === 'episode' ? `S${m.season}E${m.episode}` : (m.type === 'series' ? 'Série' : 'Filme');
+        tpl.querySelector('.watch').onclick = ()=> { if(m.type === 'series') openEpisodeSelector(m.id); else openPlayer(m.id); };
+        tpl.querySelector('.edit').onclick = ()=> openEdit(m.id);
+        tpl.getElementById('delBtn').onclick = ()=> delMovie(m.id);
+        tpl.getElementById('downloadBtn').onclick = ()=> downloadMovie(m.id);
+        renderStars(tpl, {rating: displayRating || 0});
+        const imdbEl = tpl.querySelector('.imdb');
+        if(displayImdb){
+          imdbEl.innerHTML = `<a href="${displayImdb}" target="_blank">IMDb</a>`;
+        } else {
+          imdbEl.innerHTML = '';
+        }
+        grid.appendChild(tpl);
+      });
+    }
+
+    // Download: if stored in idb, fetch blob and create download link; if external link, open
+    async function downloadMovie(id){
+      const m = library.find(x=>x.id===id); if(!m) return;
+      if(m.videoStoreKey){ const blob = await idbGet(m.videoStoreKey); if(!blob){ alert('Arquivo não encontrado no banco.'); return } const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download = (m.title||'video') + '.mp4'; a.click(); URL.revokeObjectURL(url); }
+      else if(m.videoLink){ window.open(m.videoLink,'_blank') }
+      else alert('Nenhum arquivo disponível para download.');
+    }
+
+    async function delMovie(id){
+      const m = library.find(x=>x.id===id);
+      if(!m) return;
+      const itemType = m.type === 'series' ? 'série' : m.type === 'episode' ? 'episódio' : 'filme';
+      const message = m.type === 'series' ? 'Excluir esta série e todos os seus episódios?' : `Excluir este ${itemType}?`;
+      if(!confirm(message)) return;
+      const toDelete = [m.id];
+      if(m.type === 'series'){
+        library.filter(e => e.parentId === m.id).forEach(e => toDelete.push(e.id));
+      }
+      toDelete.forEach(async id => {
+        const idx = library.findIndex(x=>x.id===id);
+        if(idx>=0){
+          const item = library[idx];
+          if(item.videoStoreKey) await idbDel(item.videoStoreKey);
+          library.splice(idx,1);
+        }
+      });
+      save(); updateFilterOptions(); render();
+    }
+
+    // Open form for new or edit
+    async function openEdit(id){
+      const m = library.find(x=>x.id===id); if(!m) return;
+      document.getElementById('dialogTitle').textContent = 'Editar';
+      fTitle.value = m.title || '';
+      // uncheck all
+      document.querySelectorAll('input[name="category"]').forEach(cb => cb.checked = false);
+      // check based on m.category
+      if(m.category){
+        const cats = m.category.split(', ');
+        cats.forEach(cat => {
+          const cb = document.querySelector(`input[name="category"][value="${cat}"]`);
+          if(cb) cb.checked = true;
+        });
+      }
+      fSynopsis.value = m.synopsis || '';
+      fVideoLink.value = m.videoLink || '';
+      // cannot prefill file inputs for security; show hint
+      const type = m.type || 'movie';
+      document.querySelector(`input[name="type"][value="${type}"]`).checked = true;
+      document.getElementById('typeSection').style.display = type === 'series' ? 'none' : 'block';
+      document.getElementById('videoSection').style.display = type === 'series' ? 'none' : 'block';
+      document.getElementById('episodesSection').style.display = type === 'series' ? 'block' : 'none';
+      if(type === 'series') {
+        document.getElementById('episodesContainer').innerHTML = '<div class="hint">Para editar episódios, edite-os individualmente.</div>';
+      } else {
+        document.getElementById('episodesContainer').innerHTML = '';
+      }
+      fImdbLink.value = m.imdbLink || '';
+      movieDialog.showModal();
+      saveBtn.onclick = async (e)=>{ e.preventDefault(); await saveFromForm(m.id); movieDialog.close(); };
+    }
+
+    function openAdd(){ document.getElementById('dialogTitle').textContent='Adicionar'; fTitle.value=''; document.querySelectorAll('input[name="category"]').forEach(cb => cb.checked = false); fSynopsis.value=''; fVideoLink.value=''; fVideoFile.value=''; fCoverFile.value=''; fBgImage.value=''; fSubtitle.value=''; document.querySelector('input[name="type"][value="movie"]').checked = true; document.getElementById('typeSection').style.display = 'block'; document.getElementById('videoSection').style.display = 'block'; document.getElementById('episodesSection').style.display = 'none'; document.getElementById('episodesContainer').innerHTML = ''; fImdbLink.value = ''; movieDialog.showModal(); saveBtn.onclick = async (e)=>{ e.preventDefault(); await saveFromForm(); movieDialog.close(); }; }
+
+    function openAddSeries(){ document.getElementById('dialogTitle').textContent='Adicionar Série'; fTitle.value=''; document.querySelectorAll('input[name="category"]').forEach(cb => cb.checked = false); fSynopsis.value=''; fVideoLink.value=''; fVideoFile.value=''; fCoverFile.value=''; fBgImage.value=''; fSubtitle.value=''; document.querySelector('input[name="type"][value="series"]').checked = true; document.getElementById('typeSection').style.display = 'none'; document.getElementById('videoSection').style.display = 'none'; document.getElementById('episodesSection').style.display = 'block'; document.getElementById('episodesContainer').innerHTML = ''; fImdbLink.value = ''; movieDialog.showModal(); saveBtn.onclick = async (e)=>{ e.preventDefault(); await saveFromForm(); movieDialog.close(); }; }
+
+    addBtn.onclick = openAdd;
+    addSeriesBtn.onclick = openAddSeries;
+
+    async function saveFromForm(editId){
+      const title = fTitle.value.trim(); if(!title){ alert('Preencha o título'); return }
+      const category = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(cb => cb.value).join(', ');
+      const synopsis = fSynopsis.value.trim();
+      const type = document.querySelector('input[name="type"]:checked').value;
+      const imdbLink = fImdbLink.value.trim() || null;
+
+      // Check for duplicates
+      if(!editId){
+        const existing = library.find(m => m.title.toLowerCase() === title.toLowerCase() && m.type === type);
+        if(existing){
+          alert(`Este ${type === 'series' ? 'série' : 'filme'} já existe na biblioteca.`);
+          return;
+        }
+      }
+      if(type === 'series'){
+        // Create series item
+        let coverData = null;
+        if(fCoverFile.files && fCoverFile.files[0]){
+          coverData = await readFileAsDataURL(fCoverFile.files[0]);
+        }
+        let bgImage = null;
+        if(fBgImage.files && fBgImage.files[0]){
+          bgImage = await readFileAsDataURL(fBgImage.files[0]);
+        }
+        const seriesItem = { id: uid(), title, category, synopsis, created: now(), type: 'series', imdbLink, cover: coverData, bgImage, progress: { isac: { currentTime: 0, duration: 0 }, sarah: { currentTime: 0, duration: 0 } } };
+        library.unshift(seriesItem);
+        // Create episode items
+        const episodeDivs = document.querySelectorAll('.episode-item');
+        for(const div of episodeDivs){
+          const season = parseInt(div.querySelector('.season').value);
+          const episodeNum = parseInt(div.querySelector('.episodeNum').value);
+          const epTitle = div.querySelector('.epTitle').value.trim();
+          const epVideoLink = div.querySelector('.epVideoLink').value.trim();
+          const epVideoFile = div.querySelector('.epVideoFile').files[0];
+          const epSubtitle = div.querySelector('.epSubtitle').files[0];
+          let epVideoStoreKey = null;
+          let epVideoType = null;
+          if(epVideoFile){
+            const key = 'v_' + uid();
+            await idbPut(key, epVideoFile);
+            epVideoStoreKey = key; epVideoType = 'file';
+          } else if(epVideoLink){
+            const yt = youtubeEmbed(epVideoLink);
+            const drive = driveDownload(epVideoLink);
+            if(yt){ epVideoLink = yt; epVideoType = 'yt' } else if(drive){ epVideoLink = drive; epVideoType='direct' } else { epVideoType='direct' }
+          }
+          let epSubtitleData = null;
+          if(epSubtitle){
+            epSubtitleData = await readFileAsText(epSubtitle);
+          }
+          const episodeItem = { id: uid(), title: epTitle, type: 'episode', parentId: seriesItem.id, season, episode: episodeNum, category, synopsis, created: now(), videoLink: epVideoLink, videoStoreKey: epVideoStoreKey, videoType: epVideoType, subtitle: epSubtitleData, progress: { isac: { currentTime: 0, duration: 0 }, sarah: { currentTime: 0, duration: 0 } } };
+          library.unshift(episodeItem);
+        }
+      } else {
+        // Movie or episode
+        const link = fVideoLink.value.trim() || null;
+        let videoLink = null; let videoStoreKey = null; let videoType = null;
+        if(fVideoFile.files && fVideoFile.files[0]){
+          const file = fVideoFile.files[0];
+          const key = 'v_' + uid();
+          await idbPut(key, file);
+          videoStoreKey = key; videoType = 'file';
+        } else if(link){
+          const yt = youtubeEmbed(link);
+          const drive = driveDownload(link);
+          if(yt){ videoLink = yt; videoType = 'yt' } else if(drive){ videoLink = drive; videoType='direct' } else { videoLink = link; videoType='direct' }
+        }
+        let coverData = null;
+        if(fCoverFile.files && fCoverFile.files[0]){
+          coverData = await readFileAsDataURL(fCoverFile.files[0]);
+        }
+        let bgImage = null;
+        if(fBgImage.files && fBgImage.files[0]){
+          bgImage = await readFileAsDataURL(fBgImage.files[0]);
+        }
+        let subtitleData = null;
+        if(fSubtitle.files && fSubtitle.files[0]){
+          subtitleData = await readFileAsText(fSubtitle.files[0]);
+        }
+        if(editId){
+          const m = library.find(x=>x.id===editId);
+          if(!m) return;
+          m.title = title; m.category = category; m.synopsis = synopsis; m.type = type; m.imdbLink = imdbLink;
+          if(videoStoreKey){ if(m.videoStoreKey) await idbDel(m.videoStoreKey); m.videoStoreKey = videoStoreKey; m.videoLink = null; m.videoType = videoType; }
+          else if(videoLink){ if(m.videoStoreKey) { await idbDel(m.videoStoreKey); delete m.videoStoreKey } m.videoLink = videoLink; m.videoType = videoType; }
+          if(coverData) m.cover = coverData;
+          if(bgImage) m.bgImage = bgImage;
+          if(subtitleData) m.subtitle = subtitleData;
+        } else {
+          const item = { id: uid(), title, category, synopsis, created: now(), type, imdbLink, videoLink, videoStoreKey, videoType, cover: coverData, bgImage, subtitle: subtitleData, progress: { isac: { currentTime: 0, duration: 0 }, sarah: { currentTime: 0, duration: 0 } } };
+          library.unshift(item);
+        }
+      }
+      save(); updateFilterOptions(); render();
+    }
+
+    function readFileAsDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsDataURL(file); }) }
+    function readFileAsText(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsText(file); }) }
+
+    // Player
+    let currentVideoEl = null; // either <video> or <iframe>
+    async function openPlayer(id){
+      const m = library.find(x=>x.id===id); if(!m) return;
+      const currentUser = localStorage.getItem('currentUser');
+      if(!m.progress) m.progress = { isac: { currentTime: 0, duration: 0 }, sarah: { currentTime: 0, duration: 0 } };
+      else if(typeof m.progress.currentTime === 'number') {
+        // old format
+        const old = m.progress;
+        m.progress = { isac: old, sarah: { currentTime: 0, duration: 0 } };
+      }
+      if(!m.progress[currentUser]) m.progress[currentUser] = { currentTime: 0, duration: 0 };
+      if(m.type === 'episode'){
+        const series = library.find(s => s.id === m.parentId);
+        if(series) playerTitle.textContent = series.title + ' - ' + m.title;
+        playerMeta.textContent = (series ? series.category + ' • ' : '') + `S${m.season}E${m.episode}`;
+      } else {
+        playerTitle.textContent = m.title;
+        playerMeta.textContent = (m.category? m.category + ' • ' : '') + fmtDate(m.created);
+      }
+      playerArea.innerHTML = ''; qualitySel.innerHTML = '';
+      subControls.innerHTML = '';
+
+      if(m.subtitle){ // create track UI
+        subControls.innerHTML = '<label class="hint">Legendas carregadas (ativar no player)</label>';
+      }
+
+      let bgImage = m.bgImage;
+      if(m.type === 'episode'){
+        const series = library.find(s => s.id === m.parentId);
+        if(series) bgImage = series.bgImage;
+      }
+      if(bgImage){
+        playerBg.style.backgroundImage = `url(${bgImage})`;
+        playerBg.style.display = 'block';
+      } else {
+        playerBg.style.display = 'none';
+      }
+
+      if(m.videoStoreKey){ // fetch blob from idb
+        const blob = await idbGet(m.videoStoreKey);
+        if(!blob){ alert('Arquivo não encontrado.'); return }
+        const url = URL.createObjectURL(blob);
+        const v = document.createElement('video'); v.controls=true; v.autoplay=true; v.src = url; v.style.width='100%'; v.style.height='100%'; v.style.objectFit='contain';
+        if(m.progress[currentUser].currentTime > 0) v.currentTime = m.progress[currentUser].currentTime;
+        if(m.subtitle){ const track = document.createElement('track'); track.kind='subtitles'; track.label='PT'; track.src = URL.createObjectURL(new Blob([m.subtitle],{type:'text/vtt'})); /* SRT->VTT conversion not implemented */ v.appendChild(track); }
+        playerArea.appendChild(v); currentVideoEl = v; setupPlayerControls(v, m, currentUser);
+        // quality: only one
+        addQualityOption('Original', url);
+      } else if(m.videoLink){
+        if(m.videoType==='yt'){ const iframe = document.createElement('iframe'); iframe.width='100%'; iframe.height='100%'; iframe.src = m.videoLink + '?autoplay=1&rel=0'; iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'; playerArea.appendChild(iframe); currentVideoEl = iframe; setupIframeControls(iframe); addQualityOption('YouTube', m.videoLink); }
+        else { // direct link
+          const v = document.createElement('video'); v.controls=true; v.autoplay=true; v.src = m.videoLink; v.style.width='100%'; v.style.height='100%'; v.style.objectFit='contain'; if(m.progress[currentUser].currentTime > 0) v.currentTime = m.progress[currentUser].currentTime; playerArea.appendChild(v); currentVideoEl = v; setupPlayerControls(v, m, currentUser); addQualityOption('Orig', m.videoLink); }
+      } else { alert('Nenhum vídeo disponível para este item.'); return }
+
+      if(m.type === 'episode'){
+        const series = library.find(s => s.id === m.parentId);
+        if(series){
+          const episodes = library.filter(e => e.parentId === series.id).sort((a,b)=> a.season - b.season || a.episode - b.episode);
+          const currentIndex = episodes.findIndex(e => e.id === m.id);
+          const seasons = [...new Set(episodes.map(e => e.season))].sort();
+          seasonSel.innerHTML = seasons.map(s => `<option value="${s}">T${s}</option>`).join('');
+          seasonSel.value = m.season;
+          function updateEpisodes(){
+            const selSeason = parseInt(seasonSel.value);
+            const eps = episodes.filter(e => e.season === selSeason);
+            episodeSel.innerHTML = eps.map(e => `<option value="${e.id}">E${e.episode}: ${e.title}</option>`).join('');
+            episodeSel.value = m.id;
+          }
+          updateEpisodes();
+          seasonSel.onchange = updateEpisodes;
+          episodeSel.onchange = () => { if(episodeSel.value !== m.id) { playerDialog.close(); openPlayer(episodeSel.value); } };
+          prevEpBtn.onclick = () => { if(currentIndex > 0) { playerDialog.close(); openPlayer(episodes[currentIndex-1].id); } };
+          nextEpBtn.onclick = () => { if(currentIndex < episodes.length - 1) { playerDialog.close(); openPlayer(episodes[currentIndex+1].id); } };
+          seasonSel.style.display = 'inline-block';
+          episodeSel.style.display = 'inline-block';
+          prevEpBtn.style.display = 'inline-block';
+          nextEpBtn.style.display = 'inline-block';
+        }
+      } else {
+        seasonSel.style.display = 'none';
+        episodeSel.style.display = 'none';
+        prevEpBtn.style.display = 'none';
+        nextEpBtn.style.display = 'none';
+      }
+
+      playerDialog.showModal();
+    }
+
+    function openEpisodeSelector(seriesId){
+      const series = library.find(s => s.id === seriesId);
+      if(!series) return;
+      document.getElementById('episodeDialogTitle').textContent = 'Escolher Episódio - ' + series.title;
+      if(series.bgImage){
+        episodeBg.style.backgroundImage = `url(${series.bgImage})`;
+        episodeBg.style.display = 'block';
+      } else {
+        episodeBg.style.display = 'none';
+      }
+      const selector = document.getElementById('episodeSelector');
+      selector.innerHTML = '';
+      const episodes = library.filter(e => e.parentId === seriesId).sort((a,b)=> a.season - b.season || a.episode - b.episode);
+      const seasons = [...new Set(episodes.map(e => e.season))].sort();
+      seasons.forEach(season => {
+        const seasonDiv = document.createElement('div');
+        seasonDiv.innerHTML = `<h3>Temporada ${season}</h3>`;
+        const epList = document.createElement('div');
+        epList.style.display = 'flex';
+        epList.style.flexWrap = 'wrap';
+        epList.style.gap = '8px';
+        episodes.filter(e => e.season === season).forEach(ep => {
+          const epBtn = document.createElement('button');
+          epBtn.className = 'btn';
+          epBtn.textContent = `E${ep.episode}: ${ep.title}`;
+          epBtn.style.width = '100%';
+          epBtn.style.textAlign = 'left';
+          epBtn.style.marginBottom = '8px';
+          epBtn.onclick = () => { episodeDialog.close(); openPlayer(ep.id); };
+          epList.appendChild(epBtn);
+        });
+        seasonDiv.appendChild(epList);
+        selector.appendChild(seasonDiv);
+      });
+      episodeDialog.showModal();
+    }
+
+    function addQualityOption(name, src){ const opt = document.createElement('option'); opt.value = src; opt.textContent = name; qualitySel.appendChild(opt); }
+
+    function setupPlayerControls(v, m, currentUser){ // HTMLVideoElement
+      v.ontimeupdate = () => {
+        if(m && v.duration){
+          m.progress[currentUser] = { currentTime: v.currentTime, duration: v.duration };
+          save();
+        }
+      };
+      speedSel.onchange = ()=>{ try{ v.playbackRate = parseFloat(speedSel.value) }catch(e){} };
+      volumeSel.oninput = ()=>{ v.volume = parseFloat(volumeSel.value); };
+      qualitySel.onchange = ()=>{ const src = qualitySel.value; if(!src) return; const currentTime = v.currentTime || 0; const isPlaying = !v.paused; // swap src keeping time
+        v.src = src; v.currentTime = currentTime; if(isPlaying) v.play(); };
+      fsBtn.onclick = ()=>{ if(v.requestFullscreen) v.requestFullscreen(); else if(v.webkitEnterFullscreen) v.webkitEnterFullscreen(); };
+      closePlayer.onclick = ()=>{ playerDialog.close(); if(v.src && v.currentTime) v.pause(); };
+    }
+    function setupIframeControls(iframe){ // limited controls
+      speedSel.onchange = ()=>{ alert('Velocidade não suportada nos embeds (YouTube). Use controles do YouTube.'); };
+      qualitySel.onchange = ()=>{ alert('Qualidade não suportada em embed.'); };
+      fsBtn.onclick = ()=>{ // try fullscreen on parent
+        if(iframe.requestFullscreen) iframe.requestFullscreen(); else alert('Tela cheia indisponível para este embed.'); };
+      closePlayer.onclick = ()=>{ playerDialog.close(); iframe.src = ''; };
+    }
+
+    // Import / Export
+    document.getElementById('exportBtn').onclick = ()=>{
+      const data = JSON.stringify(library.map(m=>({...m, // strip blobs keys okay
+        // video blobs are kept in IndexedDB; export will not include actual binary by default
+      })),null,2);
+      const blob = new Blob([data],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='isac_sarah_library.json'; a.click(); URL.revokeObjectURL(a.href);
+    };
+    document.getElementById('importBtn').onclick = ()=> importFile.click();
+    importFile.onchange = async (e)=>{ const file = e.target.files[0]; if(!file) return; const text = await readFileAsText(file); try{ const data = JSON.parse(text); if(!Array.isArray(data)) throw new Error('Formato inválido'); library = data; save(); updateFilterOptions(); render(); alert('Importado. Observação: arquivos enviados anteriormente ao IndexedDB não são incluídos no JSON.'); }catch(err){ alert('Falha ao importar: '+err.message) } };
+
+    document.getElementById('clearBtn').onclick = async ()=>{ if(!confirm('Apagar toda a biblioteca e arquivos?')) return; // clear idb
+      const db = await idbOpen(); const tx = db.transaction(STORE,'readwrite'); tx.objectStore(STORE).clear(); tx.oncomplete = ()=>{ localStorage.removeItem(KEY); library=[]; render(); updateFilterOptions(); alert('Biblioteca limpa.'); } };
+
+    document.getElementById('clearContinueBtn').onclick = () => {
+      if(confirm('Limpar toda a seção "Continuar Assistindo"? Os itens permanecerão na biblioteca.')){
+        library.forEach(m => {
+          if(m.progress){
+            delete m.progress.isac;
+            delete m.progress.sarah;
+          }
+        });
+        save();
+        render();
+      }
+    };
+
+    // search / sort / filter handlers
+    q.oninput = render; sortSel.onchange = render; filterSel.onchange = render;
+
+    // init
+    updateFilterOptions(); render();
+
+    // small helpers
+    function downloadURL(url, filename){ const a=document.createElement('a'); a.href=url; a.download=filename||''; a.click(); }
+
+
+    // expose for debug
+    window._isacSarah = { library, idbGet, idbPut, idbDel };
+  })();
+  </script>
+</body>
+</html>
